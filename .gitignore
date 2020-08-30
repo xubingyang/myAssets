@@ -1,0 +1,13 @@
+  
+# Dependencies
+/node_modules
+
+# Environment Configuration
+/config/config.env
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Debug Log
+debug.log
