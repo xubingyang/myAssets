@@ -2,7 +2,7 @@
 
 ### 简单介绍
 * 目前写了```三菱UFJ银行```和```野村证券```。其他银行可以自行举一反三。授人以渔嘛。
-* 代码是用的```Chrome```. 可以替换为```webdriverJS```支持的```Firefox, Safari, Edge, Internet Explorer```.
+* 浏览器是用的```Chrome```. 可以替换为```webdriverJS```支持的```Firefox, Safari, Edge, Internet Explorer```.
 * 如果网速慢的话，建议调整等待时常。默认为```1000毫秒```。
 * 目前是基于我自己的银行信息写的，其他的账号和操作，可以自行举一反三，授人以渔嘛。
 
@@ -31,5 +31,5 @@
 
 ### 不确定的更新计划
 * 添加更多银行和机构。
-* 用eChart画一些漂亮的图，方便数据展示。
+* 用Echarts画一些漂亮的图，方便数据展示。
 * Windows, Mac, Linux上自动任务化，方便用于VPS，Cloud Instance等虚拟机运行。
