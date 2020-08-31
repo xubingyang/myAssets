@@ -22,11 +22,11 @@
 ###### 2. 查询浏览器版本（以Chrome为例子）
 ![查询浏览器版本](./examples/Chrome_version.gif)
 ###### 3. 根据浏览器版本，在[webdriverJS官网](https://www.selenium.dev/selenium/docs/api/javascript/)匹配下载相应驱动。
-###### 4. 把webdriver的存放路径配置到PATH里。
+###### 4. 把 webdriver 的存放路径配置到 PATH 里。
 ###### 5. ```git clone https://github.com/xubingyang/myAssets.git```
 ###### 6. ```cd myAssets```进入项目文件夹
 ###### 7. ```yarn```或者```npm install```(Yarn需要单独安装)
-###### 8. 添加自己的银行信息到```config/config-temp.env```后，改名为```config.env```（删除-temp）
+###### 8. 添加自己的银行信息到 config/config-temp.env 后，改名为 config.env （删除-temp）
 ###### 9. ```yarn run start```或者```npm run start```
 
 ### 不确定的更新计划
