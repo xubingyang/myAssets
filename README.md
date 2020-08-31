@@ -17,11 +17,11 @@
 
 
 ### 使用说明
-###### 1. [Node.js下载](https://nodejs.org/zh-cn/download/)
-###### 2. 获取MongoDB的连接URI. 推荐用[MongoDB Altas](https://www.mongodb.com/cloud/atlas).
+###### 1. 下载并安装 [Node.js](https://nodejs.org/zh-cn/download/)
+###### 2. 获取 MongoDB 的连接 URI. 推荐用[MongoDB Altas](https://www.mongodb.com/cloud/atlas).
 ###### 2. 查询浏览器版本（以Chrome为例子）
 ![查询浏览器版本](./examples/Chrome_version.gif)
-###### 3. 根据浏览器版本，在[webdriverJS官网](https://www.selenium.dev/selenium/docs/api/javascript/)匹配下载相应驱动。
+###### 3. 根据浏览器版本，在 [webdriverJS官网](https://www.selenium.dev/selenium/docs/api/javascript/) 匹配下载相应驱动。
 ###### 4. 把 webdriver 的存放路径配置到 PATH 里。
 ###### 5. ```git clone https://github.com/xubingyang/myAssets.git```
 ###### 6. ```cd myAssets```进入项目文件夹
@@ -36,7 +36,7 @@
   * Mizuho银行
   * 三井住友银行
 * 用Echarts画一些漂亮的图，方便数据展示。
-* Windows, Mac, Linux上自动任务化，方便用于VPS，Cloud Instance等虚拟机运行。
+* Windows, Mac, Linux 上自动任务化，方便用于 VPS，Cloud Instance 等虚拟机运行。
 
 ### 版本更新说明
 * 1.0.0 - 2020/08/30
