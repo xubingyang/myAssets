@@ -2,13 +2,14 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const moment = require('moment');
 const { Builder, By, Key, until } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
 const colors = require("colors");
 const axios = require('axios');
 
 // 加载env参数
 dotenv.config({ path: './config/config.env' });
 
-const connectDB = async () => {
+(async function connectDB() {
   const connection = await mongoose.connect(
     process.env.MONGO_URI.replace(
       '<MONGO_PASSWORD>',
@@ -22,10 +23,7 @@ const connectDB = async () => {
     }
   );
   console.log(`MongoDB 数据库连接正常...`.cyan.bold);
-};
-
-// 连接数据库
-connectDB();
+})();;
 
 // 调用 Assets 的 Model
 const Assets = require('./models/Assets');
@@ -33,12 +31,22 @@ const Assets = require('./models/Assets');
 const today = moment().locale('zh-cn').format('YYYY-MM-DD');
 
 (async function getAllMyAssets() {
-  const driver = await new Builder().forBrowser('chrome').build();
-  const UFJHomepage = 'https://direct.bk.mufg.jp/';
+  const chromeOptions = new chrome.Options();
+  if(process.env.ENABLE_CHROME_WINDOW === 'OFF')
+  chromeOptions.addArguments(
+    'headless',
+    'disable-gpu',
+  );
+  const driver = await new Builder().forBrowser('chrome').setChromeOptions(chromeOptions).build();
+
   let UFJAssets, UFJAssetsFutsu, UFJAssetsTeiki, UFJAssetsGaikaFutsu, UFJAssetsGaikaTeiki, UFJAssetsGaikaCyochiku, UFJAssetsShintaku, UFJAssetsShintakuRevenue;
-  const NomuraHomepage = 'https://hometrade.nomura.co.jp/';
   let NomuraAssets, NomuraAssetsRevenue, NomuraMRF, NomuraTsumitate, NomuraTokutei;
+  let RakutenCreditCardDebt, RakutenCreditCardDebtPayDate, RakutenCreditCardDebtAvailable, RakutenCreditCardDebtTotal, RakutenPoints, RakutenPointsLimited;
+
   let allAssets = 0, allAssetsToCNY, allAssetsToUSD;
+  let allDebts = 0, allDebtsToCNY, allDebtsToUSD;
+  let allPoints = 0, allPointsToCNY, allPointsToUSD;
+  
   const regex = /,/gi;
 
   try {
@@ -51,8 +59,8 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
       url: `https://api.exchangeratesapi.io/latest?base=USD&symbols=JPY`
     });
     // 开始获取UFJ部分
-    if (process.env.ENABLE_UFJ) {
-      await driver.get(UFJHomepage);
+    if (process.env.ENABLE_UFJ === 'ON') {
+      await driver.get(process.env.UFJ_HOMEPAGE);
       await driver.sleep(process.env.WAIT_INTERVAL);
       const UFJDirectUrl = await (await driver.findElement(By.id('lnav_direct_login'))).getAttribute('href');
       await driver.sleep(process.env.WAIT_INTERVAL);
@@ -96,8 +104,8 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
       allAssets += UFJAssets;
     }
 
-    if (process.env.ENABLE_NOMURA) {
-      await driver.get(NomuraHomepage);
+    if (process.env.ENABLE_NOMURA === 'ON') {
+      await driver.get(process.env.NOMURA_HOMEPAGE);
       await driver.sleep(process.env.WAIT_INTERVAL);
       await driver.findElement(By.id('branchNo')).sendKeys(process.env.NOMURA_ACCOUNT_BRUNCH);
       await driver.findElement(By.id('accountNo')).sendKeys(process.env.NOMURA_ACCOUNT_NUMBER);
@@ -117,40 +125,98 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
       NomuraTokutei = await (await driver.findElement(By.css('#domestic-trust > div:nth-child(2) > table > tbody > tr > td:nth-child(2)'))).getText();
       NomuraTokutei = Number(NomuraTokutei.substring(0, NomuraTokutei.length - 1).replace(regex, ''));
 
-      console.log('野村證券总资产: ', colors.green(NomuraAssets));
-      console.log('野村證券账户收益：', colors.green(NomuraAssetsRevenue));
-      console.log('野村證券MRF账户资产：', colors.green(NomuraMRF));
-      console.log('野村證券投信積立账户资产：', colors.green(NomuraTsumitate));
-      console.log('野村證券特定預り账户资产：', colors.green(NomuraTokutei));
+      console.log('野村證券总资产: ', colors.yellow(NomuraAssets));
+      console.log('野村證券账户收益：', colors.yellow(NomuraAssetsRevenue));
+      console.log('野村證券MRF账户资产：', colors.yellow(NomuraMRF));
+      console.log('野村證券投信積立账户资产：', colors.yellow(NomuraTsumitate));
+      console.log('野村證券特定預り账户资产：', colors.yellow(NomuraTokutei));
 
       allAssets += NomuraAssets;
     }
 
-    console.log(today, ' 总资产：', colors.yellow((allAssets)));
+    if (process.env.ENABLE_RAKUTEN_CREDIT_CARD === 'ON') {
+      await driver.get(process.env.RAKUTEN_CREDIT_CARD_HOMEPAGE);
+      await driver.sleep(process.env.WAIT_INTERVAL);
+      await driver.findElement(By.id('u')).sendKeys(process.env.RAKUTEN_CREDIT_CARD_ID);
+      await driver.findElement(By.id('p')).sendKeys(process.env.RAKUTEN_CREDIT_CARD_PASSWORD, Key.ENTER);
+      await driver.sleep(process.env.WAIT_INTERVAL);
+      RakutenCreditCardDebt = await (await driver.findElement(By.css('#js-bill-mask > em'))).getText();
+      RakutenCreditCardDebt = Number(RakutenCreditCardDebt.substring(0, RakutenCreditCardDebt.length - 1).replace(regex, ''));
+      RakutenCreditCardDebtPayDate = await (await driver.findElement(By.css('#top > div.rce-l-wrap.is-grey.rce-main > div > div.rce-billInfo.rf-card.rf-card-square.rf-card-edge > div.rce-contents > div.rce-columns > div.rce-columns-cell.rce-billInfo-month > table:nth-child(2) > tbody > tr:nth-child(1) > td > em'))).getText();
+      RakutenCreditCardDebtPayDate = Number(RakutenCreditCardDebtPayDate.substring(0, RakutenCreditCardDebtPayDate.length - 5).replace('年', '').replace('月', '').replace('日', ''));
+      RakutenCreditCardDebtAvailable = await (await driver.findElement(By.id('js-bill-available'))).getText();
+      RakutenCreditCardDebtAvailable = Number(RakutenCreditCardDebtAvailable.trim().substring(0, RakutenCreditCardDebtAvailable.length - 1).replace(regex, ''));
+      RakutenCreditCardDebtTotal = await (await driver.findElement(By.id('js-bill-available-amount'))).getText();
+      RakutenCreditCardDebtTotal = Number(RakutenCreditCardDebtTotal.trim().substring(0, RakutenCreditCardDebtTotal.length - 1).replace(regex, ''));
+      RakutenPoints = await (await driver.findElement(By.css('#pointInformation > div > div.rce-membership-point > dl > dd.rce-point-all > strong'))).getText();
+      RakutenPoints = Number(RakutenPoints.trim().replace(regex, ''));
+      RakutenPointsLimited = await (await driver.findElement(By.css('#pointInformation > div > div.rce-membership-point > dl > dd:nth-child(4) > strong'))).getText();
+      RakutenPointsLimited = Number(RakutenPointsLimited.trim().replace(regex, ''));
+      const RakutenCreditCardPaymentInfo = await (await driver.findElement(By.css('#top > div.rce-l-wrap.is-grey.rce-main > div > div.rce-billInfo.rf-card.rf-card-square.rf-card-edge > div.rce-contents > div.rce-columns > div.rce-columns-cell.rce-billInfo-month > h3.rf-title-collar.rce-title-belt-first'))).getText();;
+      console.log(`楽天カード${RakutenCreditCardPaymentInfo}: `, colors.gray(RakutenCreditCardDebt));
+      console.log('楽天カードお支払い日: ', colors.gray(RakutenCreditCardDebtPayDate));
+      console.log('楽天カード現在のご利用可能額: ', colors.gray(RakutenCreditCardDebtAvailable));
+      console.log('楽天カードご利用可能枠: ', colors.gray(RakutenCreditCardDebtTotal));
+
+      allDebts += RakutenCreditCardDebt;
+      allPoints += RakutenPoints;
+    }
+
+    console.log(today, ' 总资产：', colors.cyan((allAssets)));
+    console.log(today, ' 总负债：', colors.cyan((allDebts)));
+    console.log(today, ' 总积分：', colors.cyan((allPoints)));
 
     await driver.sleep(process.env.WAIT_INTERVAL);
     const exchangeRateJPYToCNY = exchangeRateJPYToCNYRaw.data.rates.JPY;
     const exchangeRateJPYToUSD = exchangeRateJPYToUSDRaw.data.rates.JPY;
     allAssetsToCNY = (allAssets / exchangeRateJPYToCNY).toFixed(2);
     allAssetsToUSD = (allAssets / exchangeRateJPYToUSD).toFixed(2);
+    allDebtsToCNY = (allDebts / exchangeRateJPYToCNY).toFixed(2);
+    allDebtsToUSD = (allDebts / exchangeRateJPYToUSD).toFixed(2);
+    allPointsToCNY = (allPoints / exchangeRateJPYToCNY).toFixed(2);
+    allPointsToUSD = (allPoints / exchangeRateJPYToUSD).toFixed(2);
 
     const payload = {
-      UFJAssets,
-      UFJAssetsFutsu,
-      UFJAssetsTeiki,
-      UFJAssetsGaikaFutsu,
-      UFJAssetsGaikaTeiki,
-      UFJAssetsGaikaCyochiku,
-      UFJAssetsShintaku,
-      UFJAssetsShintakuRevenue,
-      NomuraAssets,
-      NomuraMRF,
-      NomuraTsumitate,
-      NomuraTokutei,
-      NomuraAssetsRevenue,
-      allAssets,
-      allAssetsToCNY,
-      allAssetsToUSD,
+      UFJ: {
+        UFJAssets,
+        UFJAssetsFutsu,
+        UFJAssetsTeiki,
+        UFJAssetsGaikaFutsu,
+        UFJAssetsGaikaTeiki,
+        UFJAssetsGaikaCyochiku,
+        UFJAssetsShintaku,
+        UFJAssetsShintakuRevenue
+      },
+      Nomura: {
+        NomuraAssets,
+        NomuraMRF,
+        NomuraTsumitate,
+        NomuraTokutei,
+        NomuraAssetsRevenue
+      },
+      Rakuten: {
+        RakutenCreditCardDebt,
+        RakutenCreditCardDebtPayDate,
+        RakutenCreditCardDebtAvailable,
+        RakutenCreditCardDebtTotal,
+        RakutenPoints,
+        RakutenPointsLimited
+      },
+      assets: {
+        allAssets,
+        allAssetsToCNY,
+        allAssetsToUSD
+      },
+      debts: {
+        allDebts,
+        allDebtsToCNY,
+        allDebtsToUSD
+      },
+      points: {
+        allPoints,
+        allPointsToCNY,
+        allPointsToUSD
+      },
       exchangeRates: {
         exchangeRateJPYToCNY,
         exchangeRateJPYToUSD
@@ -165,7 +231,8 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
     );
     console.log('上传数据库成功...'.magenta.bold);
     process.exit();
-  } catch (err) {
+  }
+  catch (err) {
     console.error(err);
   }
   finally {

@@ -4,22 +4,46 @@ const AssetsSchema = new mongoose.Schema(
   {
     date: Number,
     data: {
-      UFJAssets: Number,
-      UFJAssetsFutsu: Number,
-      UFJAssetsTeiki: Number,
-      UFJAssetsGaikaFutsu: Number,
-      UFJAssetsGaikaTeiki: Number,
-      UFJAssetsGaikaCyochiku: Number,
-      UFJAssetsShintaku: Number,
-      UFJAssetsShintakuRevenue: Number,
-      NomuraAssets: Number,
-      NomuraMRF: Number,
-      NomuraTsumitate: Number,
-      NomuraTokutei: Number,
-      NomuraAssetsRevenue: Number,
-      allAssets: Number,
-      allAssetsToCNY: Number,
-      allAssetsToUSD: Number,
+      UFJ: {
+        UFJAssets: Number,
+        UFJAssetsFutsu: Number,
+        UFJAssetsTeiki: Number,
+        UFJAssetsGaikaFutsu: Number,
+        UFJAssetsGaikaTeiki: Number,
+        UFJAssetsGaikaCyochiku: Number,
+        UFJAssetsShintaku: Number,
+        UFJAssetsShintakuRevenue: Number
+      },
+      Nomura: {
+        NomuraAssets: Number,
+        NomuraMRF: Number,
+        NomuraTsumitate: Number,
+        NomuraTokutei: Number,
+        NomuraAssetsRevenue: Number
+      },
+      Rakuten: {
+        RakutenCreditCardDebt: Number,
+        RakutenCreditCardDebtPayDate: Number,
+        RakutenCreditCardDebtAvailable: Number,
+        RakutenCreditCardDebtTotal: Number,
+        RakutenPoints: Number,
+        RakutenPointsLimited: Number
+      },
+      assets:{
+        allAssets: Number,
+        allAssetsToCNY: Number,
+        allAssetsToUSD: Number
+      },
+      debts: {
+        allDebts: Number,
+        allDebtsToCNY: Number,
+        allDebtsToUSD: Number
+      },
+      points: {
+        allPoints: Number,
+        allPointsToCNY: Number,
+        allPointsToUSD: Number
+      },
       exchangeRates: {
         exchangeRateJPYToCNY: Number,
         exchangeRateJPYToUSD: Number
