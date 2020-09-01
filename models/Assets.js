@@ -29,6 +29,14 @@ const AssetsSchema = new mongoose.Schema(
         RakutenPoints: Number,
         RakutenPointsLimited: Number
       },
+      Amex: {
+        AmexCreditCardDebt: Number,
+        AmexCreditCardDebtPayDate: Number,
+        AmexPoints: Number
+      },
+      Mizuho: {
+        MizuhoAssets: Number
+      },
       assets:{
         allAssets: Number,
         allAssetsToCNY: Number,

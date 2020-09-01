@@ -42,6 +42,8 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
   let UFJAssets, UFJAssetsFutsu, UFJAssetsTeiki, UFJAssetsGaikaFutsu, UFJAssetsGaikaTeiki, UFJAssetsGaikaCyochiku, UFJAssetsShintaku, UFJAssetsShintakuRevenue;
   let NomuraAssets, NomuraAssetsRevenue, NomuraMRF, NomuraTsumitate, NomuraTokutei;
   let RakutenCreditCardDebt, RakutenCreditCardDebtPayDate, RakutenCreditCardDebtAvailable, RakutenCreditCardDebtTotal, RakutenPoints, RakutenPointsLimited;
+  let AmexCreditCardDebt, AmexCreditCardDebtPayDate, AmexPoints;
+  let MizuhoAssets;
 
   let allAssets = 0, allAssetsToCNY, allAssetsToUSD;
   let allDebts = 0, allDebtsToCNY, allDebtsToUSD;
@@ -162,6 +164,75 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
       allPoints += RakutenPoints;
     }
 
+    if (process.env.ENABLE_AMEX_CREDIT_CARD === 'ON') {
+      await driver.get(process.env.AMEX_CREDIT_CARD_HOMEPAGE);
+      await driver.sleep(process.env.WAIT_INTERVAL);
+      await driver.findElement(By.id('eliloUserID')).sendKeys(process.env.AMEX_CREDIT_CARD_ID);
+      await driver.findElement(By.id('eliloPassword')).sendKeys(process.env.AMEX_CREDIT_CARD_PASSWORD);
+      await driver.findElement(By.id('eliloSelect')).click();
+      await driver.findElement(By.css('#eliloSelect > option:nth-child(1)')).click();
+      await driver.findElement(By.css('#loginSubmit > span')).click();
+      await driver.sleep(process.env.WAIT_INTERVAL * 5);
+      AmexCreditCardDebtPayDate = await (await driver.findElement(By.css('#axp-balance-payment > div:nth-child(1) > div > div > div:nth-child(2) > div > div > div.heading-5.margin-1-b'))).getText();
+      AmexCreditCardDebtPayDate = Number(AmexCreditCardDebtPayDate.replace('/', '').replace('/', ''));
+      await driver.get(process.env.AMEX_CREDIT_CARD_DETAILPAGE);
+      AmexPoints = await (await driver.findElement(By.css('#rewards > div.flex > h1'))).getText();
+      AmexPoints = Number(AmexPoints.replace(regex, ''));
+      AmexCreditCardDebt = await (await driver.findElement(By.css('#paymentSummary > div.block > div > h1'))).getText();
+      AmexCreditCardDebt = Number(AmexCreditCardDebt.trim().replace('¥', ''));
+
+      console.log('Amexカード负债: ', colors.gray(AmexCreditCardDebt));
+      console.log('Amexカードお支払い日: ', colors.gray(AmexCreditCardDebtPayDate));
+
+      allDebts += AmexCreditCardDebt;
+      allPoints += AmexPoints;
+    }
+
+    if (process.env.ENABLE_MIZUHO === 'ON') {
+      await driver.get(process.env.MIZUHO_HOMEPAGE);
+      await driver.sleep(process.env.WAIT_INTERVAL);
+      await driver.findElement(By.id('txbCustNo')).sendKeys(process.env.MIZUHO_ACCOUNT_NUMBER, Key.ENTER);
+      await driver.sleep(process.env.WAIT_INTERVAL);
+      if (!driver.findElement(By.id('PASSWD_LoginPwdInput'))) {
+        if (await driver.findElement(By.id('txtQuery')).getText() === process.env.MIZUHO_QUESTION_1) {
+          await driver.findElement(By.id('txbTestWord')).sendKeys(process.env.MIZUHO_ANSWER_1);
+          await driver.findElement(By.css('#main-nomenu > section > input:nth-child(2)')).click();
+        }
+        else if (await driver.findElement(By.id('txtQuery')).getText() === process.env.MIZUHO_QUESTION_2) {
+          await driver.findElement(By.id('txbTestWord')).sendKeys(process.env.MIZUHO_ANSWER_2);
+          await driver.findElement(By.css('#main-nomenu > section > input:nth-child(2)')).click();
+        }
+        else {
+          await driver.findElement(By.id('txbTestWord')).sendKeys(process.env.MIZUHO_ANSWER_3);
+          await driver.findElement(By.css('#main-nomenu > section > input:nth-child(2)')).click();
+        }
+      }
+      await driver.sleep(process.env.WAIT_INTERVAL);
+      if (!driver.findElement(By.id('PASSWD_LoginPwdInput'))) {
+        if (await driver.findElement(By.id('txtQuery')).getText() === process.env.MIZUHO_QUESTION_1) {
+          await driver.findElement(By.id('txbTestWord')).sendKeys(process.env.MIZUHO_ANSWER_1);
+          await driver.findElement(By.css('#main-nomenu > section > input:nth-child(2)')).click();
+        }
+        else if (await driver.findElement(By.id('txtQuery')).getText() === process.env.MIZUHO_QUESTION_2) {
+          await driver.findElement(By.id('txbTestWord')).sendKeys(process.env.MIZUHO_ANSWER_2);
+          await driver.findElement(By.css('#main-nomenu > section > input:nth-child(2)')).click();
+        }
+        else {
+          await driver.findElement(By.id('txbTestWord')).sendKeys(process.env.MIZUHO_ANSWER_3);
+          await driver.findElement(By.css('#main-nomenu > section > input:nth-child(2)')).click();
+        }
+      }
+      await driver.sleep(process.env.WAIT_INTERVAL);
+      await driver.findElement(By.id('PASSWD_LoginPwdInput')).sendKeys(process.env.MIZUHO_ACCOUNT_LOGIN_PASSWORD, Key.ENTER);
+      await driver.sleep(process.env.WAIT_INTERVAL);
+      MizuhoAssets = await (await driver.findElement(By.id('txtCrntBal'))).getText();
+      MizuhoAssets = Number(MizuhoAssets.replace('円', '').trim());
+
+      console.log('Mizuho銀行总资产：', colors.blue(MizuhoAssets));
+
+      allAssets += MizuhoAssets;
+    }
+
     console.log(today, ' 总资产：', colors.cyan((allAssets)));
     console.log(today, ' 总负债：', colors.cyan((allDebts)));
     console.log(today, ' 总积分：', colors.cyan((allPoints)));
@@ -201,6 +272,14 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
         RakutenCreditCardDebtTotal,
         RakutenPoints,
         RakutenPointsLimited
+      },
+      Amex: {
+        AmexCreditCardDebt,
+        AmexCreditCardDebtPayDate,
+        AmexPoints
+      },
+      Mizuho: {
+        MizuhoAssets
       },
       assets: {
         allAssets,
