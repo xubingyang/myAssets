@@ -11,3 +11,7 @@ Thumbs.db
 
 # Debug Log
 debug.log
+
+# Lock File
+package-lock.json
+yarn.lock
