@@ -44,6 +44,7 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
   let RakutenCreditCardDebt, RakutenCreditCardDebtPayDate, RakutenCreditCardDebtAvailable, RakutenCreditCardDebtTotal, RakutenPoints, RakutenPointsLimited;
   let AmexCreditCardDebt, AmexCreditCardDebtPayDate, AmexPoints;
   let MizuhoAssets;
+  let RakutenAssets;
 
   let allAssets = 0, allAssetsToCNY, allAssetsToUSD;
   let allDebts = 0, allDebtsToCNY, allDebtsToUSD;
@@ -136,11 +137,11 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
       NomuraMRF = await (await driver.findElement(By.css('#mrf > div.hidden-sd > table > tbody > tr:nth-child(1) > td.txt-num.no-line-td-bottom'))).getText();
       NomuraMRF = Number(NomuraMRF.substring(0, NomuraMRF.length - 1).replace(regex, ''));
       console.log('野村證券MRF账户资产：', colors.yellow(NomuraMRF));
-      if (driver.findElement(By.css('#mrf > div.hidden-sd > table > tbody > tr:nth-child(3) > td:nth-child(1)'))) {
-        NomuraTsumitate = await (await driver.findElement(By.css('#mrf > div.hidden-sd > table > tbody > tr:nth-child(3) > td.txt-num.no-line-td-bottom'))).getText();
-        NomuraTsumitate = Number(NomuraTsumitate.substring(0, NomuraTsumitate.length - 1).replace(regex, ''));
-        console.log('野村證券投信積立账户资产：', colors.yellow(NomuraTsumitate));
-      }
+      // if (driver.findElement(By.css('#mrf > div.hidden-sd > table > tbody > tr:nth-child(3) > td:nth-child(1)'))) {
+      //   NomuraTsumitate = await (await driver.findElement(By.css('#mrf > div.hidden-sd > table > tbody > tr:nth-child(3) > td.txt-num.no-line-td-bottom'))).getText();
+      //   NomuraTsumitate = Number(NomuraTsumitate.substring(0, NomuraTsumitate.length - 1).replace(regex, ''));
+      //   console.log('野村證券投信積立账户资产：', colors.yellow(NomuraTsumitate));
+      // }
       NomuraTokutei = await (await driver.findElement(By.css('#domestic-trust > div:nth-child(2) > table > tbody > tr > td:nth-child(2)'))).getText();
       NomuraTokutei = Number(NomuraTokutei.substring(0, NomuraTokutei.length - 1).replace(regex, ''));
       console.log('野村證券特定預り账户资产：', colors.yellow(NomuraTokutei));
@@ -156,22 +157,22 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
       await driver.sleep(process.env.WAIT_INTERVAL);
       RakutenCreditCardDebt = await (await driver.findElement(By.css('#js-bill-mask > em'))).getText();
       RakutenCreditCardDebt = Number(RakutenCreditCardDebt.substring(0, RakutenCreditCardDebt.length - 1).replace(regex, ''));
-      console.log(`楽天カード${RakutenCreditCardPaymentInfo}: `, colors.gray(RakutenCreditCardDebt));
       RakutenCreditCardDebtPayDate = await (await driver.findElement(By.css('#top > div.rce-l-wrap.is-grey.rce-main > div > div.rce-billInfo.rf-card.rf-card-square.rf-card-edge > div.rce-contents > div.rce-columns > div.rce-columns-cell.rce-billInfo-month > table:nth-child(2) > tbody > tr:nth-child(1) > td > em'))).getText();
       RakutenCreditCardDebtPayDate = Number(RakutenCreditCardDebtPayDate.substring(0, RakutenCreditCardDebtPayDate.length - 5).replace('年', '').replace('月', '').replace('日', ''));
-      console.log('楽天カードお支払い日: ', colors.gray(RakutenCreditCardDebtPayDate));
       RakutenCreditCardDebtAvailable = await (await driver.findElement(By.id('js-bill-available'))).getText();
       RakutenCreditCardDebtAvailable = Number(RakutenCreditCardDebtAvailable.trim().substring(0, RakutenCreditCardDebtAvailable.length - 1).replace(regex, ''));
-      console.log('楽天カード現在のご利用可能額: ', colors.gray(RakutenCreditCardDebtAvailable));
       RakutenCreditCardDebtTotal = await (await driver.findElement(By.id('js-bill-available-amount'))).getText();
       RakutenCreditCardDebtTotal = Number(RakutenCreditCardDebtTotal.trim().substring(0, RakutenCreditCardDebtTotal.length - 1).replace(regex, ''));
       RakutenPoints = await (await driver.findElement(By.css('#pointInformation > div > div.rce-membership-point > dl > dd.rce-point-all > strong'))).getText();
-      console.log('楽天カードご利用可能枠: ', colors.gray(RakutenCreditCardDebtTotal));
       RakutenPoints = Number(RakutenPoints.trim().replace(regex, ''));
       RakutenPointsLimited = await (await driver.findElement(By.css('#pointInformation > div > div.rce-membership-point > dl > dd:nth-child(4) > strong'))).getText();
       RakutenPointsLimited = Number(RakutenPointsLimited.trim().replace(regex, ''));
       const RakutenCreditCardPaymentInfo = await (await driver.findElement(By.css('#top > div.rce-l-wrap.is-grey.rce-main > div > div.rce-billInfo.rf-card.rf-card-square.rf-card-edge > div.rce-contents > div.rce-columns > div.rce-columns-cell.rce-billInfo-month > h3.rf-title-collar.rce-title-belt-first'))).getText();;
-
+      console.log(`楽天カード${RakutenCreditCardPaymentInfo}: `, colors.gray(RakutenCreditCardDebt));
+      console.log('楽天カードお支払い日: ', colors.gray(RakutenCreditCardDebtPayDate));
+      console.log('楽天カード現在のご利用可能額: ', colors.gray(RakutenCreditCardDebtAvailable));
+      console.log('楽天カードご利用可能枠: ', colors.gray(RakutenCreditCardDebtTotal));
+      
       allDebts += RakutenCreditCardDebt;
       allPoints += RakutenPoints;
     }
@@ -184,15 +185,19 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
       await driver.findElement(By.id('eliloSelect')).click();
       await driver.findElement(By.css('#eliloSelect > option:nth-child(1)')).click();
       await driver.findElement(By.css('#loginSubmit > span')).click();
-      await driver.sleep(process.env.WAIT_INTERVAL * 5);
+      await driver.sleep(process.env.WAIT_INTERVAL * 4);
       AmexCreditCardDebtPayDate = await (await driver.findElement(By.css('#axp-balance-payment > div:nth-child(1) > div > div > div:nth-child(2) > div > div > div.heading-5.margin-1-b'))).getText();
       AmexCreditCardDebtPayDate = Number(AmexCreditCardDebtPayDate.replace('/', '').replace('/', ''));
       await driver.get(process.env.AMEX_CREDIT_CARD_DETAILPAGE);
+      await driver.sleep(process.env.WAIT_INTERVAL * 3);
       AmexPoints = await (await driver.findElement(By.css('#rewards > div.flex > h1'))).getText();
       AmexPoints = Number(AmexPoints.replace(regex, ''));
-      AmexCreditCardDebt = await (await driver.findElement(By.css('#paymentSummary > div.block > div > h1'))).getText();
-      AmexCreditCardDebt = Number(AmexCreditCardDebt.trim().replace('¥', ''));
-
+      AmexCreditCardDebt = await (await driver.findElement(By.xpath('//*[@id="paymentSummary"]/div[3]/p[2]/span[2]'))).getText();
+      if (AmexCreditCardDebt.trim() === '-') {
+        AmexCreditCardDebt = 0;
+      } else {
+        AmexCreditCardDebt = Number(AmexCreditCardDebt.trim());
+      }
       console.log('Amexカード负债: ', colors.gray(AmexCreditCardDebt));
       console.log('Amexカードお支払い日: ', colors.gray(AmexCreditCardDebtPayDate));
 
@@ -245,6 +250,21 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
       allAssets += MizuhoAssets;
     }
 
+    if (process.env.ENABLE_RAKUTEN_BANK === 'ON') {
+      await driver.get(process.env.RAKUTEN_BANK_HOMEPAGE);
+      await driver.sleep(process.env.WAIT_INTERVAL * 2);
+      await driver.findElement(By.id('LOGIN:USER_ID')).sendKeys(process.env.RAKUTEN_BANK_ACCOUNT_USERID);
+      await driver.findElement(By.id('LOGIN:LOGIN_PASSWORD')).sendKeys(process.env.RAKUTEN_BANK_ACCOUNT_LOGIN_PASSWORD);
+      await driver.findElement(By.id('LOGIN:_idJsp43')).click();
+      await driver.sleep(process.env.WAIT_INTERVAL * 2);
+      RakutenAssets = await (await driver.findElement(By.xpath('//*[@id="lyt-deposit"]/div/div[2]/div/div[3]/div[1]/table/tbody/tr/td/span[1]'))).getText();
+      RakutenAssets = Number(RakutenAssets.replace(',', '').trim());
+
+      console.log('楽天銀行总资产：', colors.blue(RakutenAssets));
+
+      allAssets += RakutenAssets;
+    }
+
     console.log(today, ' 总资产：', colors.cyan((allAssets)));
     console.log(today, ' 总负债：', colors.cyan((allDebts)));
     console.log(today, ' 总积分：', colors.cyan((allPoints)));
@@ -292,6 +312,9 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD');
       },
       Mizuho: {
         MizuhoAssets
+      },
+      Rakuten: {
+        RakutenAssets
       },
       assets: {
         allAssets,

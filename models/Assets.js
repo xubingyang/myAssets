@@ -37,6 +37,9 @@ const AssetsSchema = new mongoose.Schema(
       Mizuho: {
         MizuhoAssets: Number
       },
+      Rakuten: {
+        RakutenAssets: Number
+      },
       assets:{
         allAssets: Number,
         allAssetsToCNY: Number,
