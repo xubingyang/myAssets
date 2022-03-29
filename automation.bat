@@ -1,3 +1,3 @@
-D:
-cd "Nodejs Projects\MyAssets"
-yarn run start
+cd ../..
+cd "Auto Tasks\myAssets"
+npm run start
