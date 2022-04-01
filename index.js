@@ -84,6 +84,149 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD')
       method: 'GET',
       url: `https://api.currencyapi.com/v3/latest?apikey=${process.env.CURRENCY_API_API_KEY}&base_currency=USD&currencies=JPY`
     })
+    if (process.env.ENABLE_AMEX_CREDIT_CARD === 'ON') {
+      await driver.get(process.env.AMEX_CREDIT_CARD_HOMEPAGE)
+      await driver.sleep(process.env.WAIT_INTERVAL * 2)
+      await driver
+        .findElement(By.id('eliloUserID'))
+        .sendKeys(process.env.AMEX_CREDIT_CARD_ID)
+      await driver
+        .findElement(By.id('eliloPassword'))
+        .sendKeys(process.env.AMEX_CREDIT_CARD_PASSWORD)
+      await driver.findElement(By.id('eliloSelect')).click()
+      await driver
+        .findElement(By.css('#eliloSelect > option:nth-child(1)'))
+        .click()
+      await driver.findElement(By.css('#loginSubmit > span')).click()
+      await driver.sleep(process.env.WAIT_INTERVAL * 10)
+      AmexCreditCardDebtPayDate = await (
+        await driver.findElement(
+          By.css(
+            '#axp-balance-payment > div:nth-child(1) > div > div > div:nth-child(2) > div > div > div.heading-5.margin-1-b'
+          )
+        )
+      ).getText()
+      AmexCreditCardDebtPayDate = Number(
+        AmexCreditCardDebtPayDate.replace('/', '').replace('/', '')
+      )
+      await driver.get(process.env.AMEX_CREDIT_CARD_DETAILPAGE)
+      await driver.sleep(process.env.WAIT_INTERVAL * 10)
+      AmexPoints = await (
+        await driver.findElement(By.css('#rewards > div.flex > h1'))
+      ).getText()
+      AmexPoints = Number(AmexPoints.replace(regex, ''))
+      AmexCreditCardDebt = await (
+        await driver.findElement(
+          By.css(
+            '#balanceSummary > div.block > div.balance-summary-first > div > p'
+          )
+        )
+      ).getText()
+      if (AmexCreditCardDebt.trim() === '-') {
+        AmexCreditCardDebt = 0
+      } else {
+        AmexCreditCardDebt = Number(
+          AmexCreditCardDebt.replace('¥', '').trim().replace(regex, '')
+        )
+      }
+      console.log('Amexカード负债: ', colors.gray(AmexCreditCardDebt))
+      console.log(
+        'Amexカードお支払い日: ',
+        colors.gray(AmexCreditCardDebtPayDate)
+      )
+      console.log('Amexカードポイント: ', colors.gray(AmexPoints))
+
+      allDebts += AmexCreditCardDebt
+      allPoints += AmexPoints
+    }
+
+    if (process.env.ENABLE_RAKUTEN_CREDIT_CARD === 'ON') {
+      await driver.get(process.env.RAKUTEN_CREDIT_CARD_HOMEPAGE)
+      await driver.sleep(process.env.WAIT_INTERVAL)
+      await driver
+        .findElement(By.id('u'))
+        .sendKeys(process.env.RAKUTEN_CREDIT_CARD_ID)
+      await driver
+        .findElement(By.id('p'))
+        .sendKeys(process.env.RAKUTEN_CREDIT_CARD_PASSWORD, Key.ENTER)
+      await driver.sleep(process.env.WAIT_INTERVAL)
+      await driver
+        .findElement(By.id('indexForm:password'))
+        .sendKeys(process.env.RAKUTEN_CREDIT_CARD_2_PASSWORD, Key.ENTER)
+        await driver.sleep(process.env.WAIT_INTERVAL * 3)
+      RakutenCreditCardDebt = await (
+        await driver.findElement(By.css('#js-rd-billInfo-amount_show > span'))
+      ).getText()
+      RakutenCreditCardDebt = Number(
+        RakutenCreditCardDebt.substring(
+          0,
+          RakutenCreditCardDebt.length
+        ).replace(regex, '')
+      )
+      RakutenCreditCardDebtPayDate = await (
+        await driver.findElement(
+          By.css(
+            '#js-rd-billInfo > div.rd-column-cell.rd-billInfo-month > div.rd-billInfo-table > div.rd-billInfo-table_month.rd-flex > div.rd-billInfo-table_date > div.rd-billInfo-table_data.rd-flex.rf-font-bold > div.rd-font-robot'
+          )
+        )
+      ).getText()
+      RakutenCreditCardDebtPayDate = Number(
+        RakutenCreditCardDebtPayDate.substring(
+          0,
+          RakutenCreditCardDebtPayDate.length - 5
+        )
+          .replace('年', '')
+          .replace('月', '')
+          .replace('日', '')
+      )
+      RakutenCreditCardDebtAvailable = await (
+        await driver.findElement(By.css('#js-bill-available > span'))
+      ).getText()
+      RakutenCreditCardDebtAvailable = Number(
+        RakutenCreditCardDebtAvailable.trim().replace(regex, '')
+      )
+      RakutenCreditCardDebtTotal = await (
+        await driver.findElement(By.css('#js-bill-available-amount > span'))
+      ).getText()
+      RakutenCreditCardDebtTotal = Number(
+        RakutenCreditCardDebtTotal.trim().replace(regex, '')
+      )
+      RakutenPoints = await (
+        await driver.findElement(By.id('rakutenSuperPoints'))
+      ).getText()
+      RakutenPoints = Number(RakutenPoints.trim().replace(regex, ''))
+      RakutenPointsLimited = await (
+        await driver.findElement(By.id('rakutenLimitedSuperPoints'))
+      ).getText()
+      RakutenPointsLimited = Number(
+        RakutenPointsLimited.trim().replace(regex, '')
+      )
+      const RakutenCreditCardPaymentInfo = await (
+        await driver.findElement(By.id('month'))
+      ).getText()
+      console.log(
+        `楽天カード${RakutenCreditCardPaymentInfo}: `,
+        colors.gray(RakutenCreditCardDebt)
+      )
+      console.log(
+        '楽天カードお支払い日: ',
+        colors.gray(RakutenCreditCardDebtPayDate)
+      )
+      console.log(
+        '楽天カード現在のご利用可能額: ',
+        colors.gray(RakutenCreditCardDebtAvailable)
+      )
+      console.log(
+        '楽天カードご利用可能枠: ',
+        colors.gray(RakutenCreditCardDebtTotal)
+      )
+      console.log('楽天ポイント: ', colors.gray(RakutenPoints))
+      console.log('楽天期間限定ポイント: ', colors.gray(RakutenPointsLimited))
+
+      allDebts += RakutenCreditCardDebt
+      allPoints += RakutenPoints
+    }
+
     // 开始获取UFJ部分
     if (process.env.ENABLE_UFJ === 'ON') {
       await driver.get(process.env.UFJ_HOMEPAGE)
@@ -320,148 +463,6 @@ const today = moment().locale('zh-cn').format('YYYY-MM-DD')
       // console.log('野村證券特定預り账户资产：', colors.yellow(NomuraTokutei))
 
       allAssets += NomuraAssets
-    }
-
-    if (process.env.ENABLE_RAKUTEN_CREDIT_CARD === 'ON') {
-      await driver.get(process.env.RAKUTEN_CREDIT_CARD_HOMEPAGE)
-      await driver.sleep(process.env.WAIT_INTERVAL)
-      await driver
-        .findElement(By.id('u'))
-        .sendKeys(process.env.RAKUTEN_CREDIT_CARD_ID)
-      await driver
-        .findElement(By.id('p'))
-        .sendKeys(process.env.RAKUTEN_CREDIT_CARD_PASSWORD, Key.ENTER)
-      await driver.sleep(process.env.WAIT_INTERVAL)
-      await driver
-        .findElement(By.id('indexForm:password'))
-        .sendKeys(process.env.RAKUTEN_CREDIT_CARD_2_PASSWORD, Key.ENTER)
-      RakutenCreditCardDebt = await (
-        await driver.findElement(By.css('#js-rd-billInfo-amount_show > span'))
-      ).getText()
-      RakutenCreditCardDebt = Number(
-        RakutenCreditCardDebt.substring(
-          0,
-          RakutenCreditCardDebt.length
-        ).replace(regex, '')
-      )
-      RakutenCreditCardDebtPayDate = await (
-        await driver.findElement(
-          By.css(
-            '#js-rd-billInfo > div.rd-column-cell.rd-billInfo-month > div.rd-billInfo-table > div.rd-billInfo-table_month.rd-flex > div.rd-billInfo-table_date > div.rd-billInfo-table_data.rd-flex.rf-font-bold > div.rd-font-robot'
-          )
-        )
-      ).getText()
-      RakutenCreditCardDebtPayDate = Number(
-        RakutenCreditCardDebtPayDate.substring(
-          0,
-          RakutenCreditCardDebtPayDate.length - 5
-        )
-          .replace('年', '')
-          .replace('月', '')
-          .replace('日', '')
-      )
-      RakutenCreditCardDebtAvailable = await (
-        await driver.findElement(By.css('#js-bill-available > span'))
-      ).getText()
-      RakutenCreditCardDebtAvailable = Number(
-        RakutenCreditCardDebtAvailable.trim().replace(regex, '')
-      )
-      RakutenCreditCardDebtTotal = await (
-        await driver.findElement(By.css('#js-bill-available-amount > span'))
-      ).getText()
-      RakutenCreditCardDebtTotal = Number(
-        RakutenCreditCardDebtTotal.trim().replace(regex, '')
-      )
-      RakutenPoints = await (
-        await driver.findElement(By.id('rakutenSuperPoints'))
-      ).getText()
-      RakutenPoints = Number(RakutenPoints.trim().replace(regex, ''))
-      RakutenPointsLimited = await (
-        await driver.findElement(By.id('rakutenLimitedSuperPoints'))
-      ).getText()
-      RakutenPointsLimited = Number(
-        RakutenPointsLimited.trim().replace(regex, '')
-      )
-      const RakutenCreditCardPaymentInfo = await (
-        await driver.findElement(By.id('month'))
-      ).getText()
-      console.log(
-        `楽天カード${RakutenCreditCardPaymentInfo}: `,
-        colors.gray(RakutenCreditCardDebt)
-      )
-      console.log(
-        '楽天カードお支払い日: ',
-        colors.gray(RakutenCreditCardDebtPayDate)
-      )
-      console.log(
-        '楽天カード現在のご利用可能額: ',
-        colors.gray(RakutenCreditCardDebtAvailable)
-      )
-      console.log(
-        '楽天カードご利用可能枠: ',
-        colors.gray(RakutenCreditCardDebtTotal)
-      )
-      console.log('楽天ポイント: ', colors.gray(RakutenPoints))
-      console.log('楽天期間限定ポイント: ', colors.gray(RakutenPointsLimited))
-
-      allDebts += RakutenCreditCardDebt
-      allPoints += RakutenPoints
-    }
-
-    if (process.env.ENABLE_AMEX_CREDIT_CARD === 'ON') {
-      await driver.get(process.env.AMEX_CREDIT_CARD_HOMEPAGE)
-      await driver.sleep(process.env.WAIT_INTERVAL * 3)
-      await driver
-        .findElement(By.id('eliloUserID'))
-        .sendKeys(process.env.AMEX_CREDIT_CARD_ID)
-      await driver
-        .findElement(By.id('eliloPassword'))
-        .sendKeys(process.env.AMEX_CREDIT_CARD_PASSWORD)
-      await driver.findElement(By.id('eliloSelect')).click()
-      await driver
-        .findElement(By.css('#eliloSelect > option:nth-child(1)'))
-        .click()
-      await driver.findElement(By.css('#loginSubmit > span')).click()
-      await driver.sleep(process.env.WAIT_INTERVAL * 5)
-      AmexCreditCardDebtPayDate = await (
-        await driver.findElement(
-          By.css(
-            '#axp-balance-payment > div:nth-child(1) > div > div > div:nth-child(2) > div > div > div.heading-5.margin-1-b'
-          )
-        )
-      ).getText()
-      AmexCreditCardDebtPayDate = Number(
-        AmexCreditCardDebtPayDate.replace('/', '').replace('/', '')
-      )
-      await driver.get(process.env.AMEX_CREDIT_CARD_DETAILPAGE)
-      await driver.sleep(process.env.WAIT_INTERVAL * 5)
-      AmexPoints = await (
-        await driver.findElement(By.css('#rewards > div.flex > h1'))
-      ).getText()
-      AmexPoints = Number(AmexPoints.replace(regex, ''))
-      AmexCreditCardDebt = await (
-        await driver.findElement(
-          By.css(
-            '#balanceSummary > div.block > div.balance-summary-first > div > p'
-          )
-        )
-      ).getText()
-      if (AmexCreditCardDebt.trim() === '-') {
-        AmexCreditCardDebt = 0
-      } else {
-        AmexCreditCardDebt = Number(
-          AmexCreditCardDebt.replace('¥', '').trim().replace(regex, '')
-        )
-      }
-      console.log('Amexカード负债: ', colors.gray(AmexCreditCardDebt))
-      console.log(
-        'Amexカードお支払い日: ',
-        colors.gray(AmexCreditCardDebtPayDate)
-      )
-      console.log('Amexカードポイント: ', colors.gray(AmexPoints))
-
-      allDebts += AmexCreditCardDebt
-      allPoints += AmexPoints
     }
 
     if (process.env.ENABLE_MIZUHO === 'ON') {
